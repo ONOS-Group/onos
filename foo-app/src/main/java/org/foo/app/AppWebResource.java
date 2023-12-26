@@ -16,6 +16,16 @@
 package org.foo.app;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import org.onosproject.net.behaviour.QueueId;
+import org.onosproject.net.behaviour.QueueConfigBehaviour;
+import org.onosproject.net.behaviour.QueueDescription.Type;
+import org.onosproject.net.behaviour.QueueDescription;
+import org.onosproject.net.behaviour.DefaultQueueDescription;
+import org.onlab.util.Bandwidth;
+
+
 import org.onosproject.rest.AbstractWebResource;
 
 import javax.ws.rs.GET;
@@ -23,6 +33,10 @@ import javax.ws.rs.POST;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.Optional;
 
 import static org.onlab.util.Tools.nullIsNotFound;
 
@@ -42,6 +56,90 @@ public class AppWebResource extends AbstractWebResource {
     public Response getQueue() {
         ObjectNode node = mapper().createObjectNode().put("getQueue","getQueue");
         return ok(node).build();
+    }
+
+    @GET
+    @Path("getQueues")
+    public Response getQueues() {
+
+        // Create a QueueId
+
+        QueueId queueId = QueueId.queueId("myQueue");
+
+        // Create an EnumSet for the Queue type (for example, MAX)
+        EnumSet<QueueDescription.Type> type = EnumSet.of(QueueDescription.Type.MAX);
+
+        // Set optional parameters if needed (Example: maxRate, minRate, burst, priority)
+        Optional<Bandwidth> maxRateOp = Optional.of(Bandwidth.bps(1000000)); // 1 Mbps
+        Optional<Bandwidth> minRateOp = Optional.of(Bandwidth.bps(500000)); // 0.5 Mbps
+        Optional<Long> burstOp = Optional.of(200L);
+        Optional<Long> priorityOp = Optional.of(5L);
+
+        // Use the QueueDescription builder to create the QueueDescription
+        DefaultQueueDescription.Builder builder = DefaultQueueDescription.builder()
+                .queueId(queueId)
+                .type(type)
+                .maxRate(maxRateOp.get()) // Add maxRate if present
+                .minRate(minRateOp.get()) // Add minRate if present
+                .burst(burstOp.get()) // Add burst if present
+                .priority(priorityOp.get()); // Add priority if present
+
+        // Build the QueueDescription
+        QueueDescription queue = builder.build();
+
+        QueueOpImp queueOpImp = new QueueOpImp();
+        
+        // Collection<QueueDescription> queues = queueOpImp.getQueues();
+
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        // Create an ObjectNode to hold the queue information
+        ObjectNode rootNode = objectMapper.createObjectNode();
+        ArrayNode queuesArray = rootNode.putArray("queues");
+
+
+        ObjectNode queueNode = objectMapper.createObjectNode();
+
+        // Add queue information to the queueNode
+        queueNode.put("queueId", queueId.name());
+        queue.dscp().ifPresent(dscp -> queueNode.put("dscp", dscp));
+        queueNode.put("type", queue.type().toString());
+
+        queue.maxRate().ifPresent(maxRate -> queueNode.put("maxRate", maxRate.toString()));
+        queue.minRate().ifPresent(minRate -> queueNode.put("minRate", minRate.toString()));
+        queue.burst().ifPresent(burst -> queueNode.put("burst", burst));
+        queue.priority().ifPresent(priority -> queueNode.put("priority", priority));
+
+        // Add the queueNode to the queuesArray
+        queuesArray.add(queueNode);
+
+        queuesArray.add(queueNode);
+
+
+
+
+
+
+        // Iterate through the Collection of QueueDescriptions
+        /* for (QueueDescription queue : queues) {
+            ObjectNode queueNode = objectMapper.createObjectNode();
+            QueueId queueId = queue.queueId();
+
+            // Add queue information to the queueNode
+            queueNode.put("queueId", queueId.name());
+            queue.dscp().ifPresent(dscp -> queueNode.put("dscp", dscp));
+            queueNode.put("type", queue.type().toString());
+
+            queue.maxRate().ifPresent(maxRate -> queueNode.put("maxRate", maxRate.toString()));
+            queue.minRate().ifPresent(minRate -> queueNode.put("minRate", minRate.toString()));
+            queue.burst().ifPresent(burst -> queueNode.put("burst", burst));
+            queue.priority().ifPresent(priority -> queueNode.put("priority", priority));
+
+            // Add the queueNode to the queuesArray
+            queuesArray.add(queueNode);
+        } */
+        
+        return ok(rootNode).build();
     }
 
     @POST
