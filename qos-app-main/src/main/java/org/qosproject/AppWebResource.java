@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.foo.app;
+package org.qosproject;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -155,5 +155,48 @@ public class AppWebResource extends AbstractWebResource {
         ObjectNode node = mapper().createObjectNode().put("deleteQueue","deleteQueue");
         return ok(node).build();
     }
+
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("{deviceId}/{queueId}")
+    public Response deleteQueue(@PathParam("deviceId") String deviceId,@PathParam("queueId") String queueId) {
+
+//        FlowRuleService service = get(FlowRuleService.class);
+//        Iterable<FlowEntry> flowEntries = service.getFlowEntries(DeviceId.deviceId(deviceId));
+        DriverService driverHandler = get(DriverService.class);
+
+        OvsdbController ovsController = driverHandler.get(OvsdbController.class);
+        OvsdbNodeId nodeId = changeDeviceIdToNodeId(driverHandler.data().deviceId());
+
+        OvsdbClientService ovsdbClientService = ovsController.getOvsdbClient(nodeId);
+
+        QueueId queueID = QueueId.queueId(queueId);
+        ovsdbClient.dropQueue(queueID);
+
+        
+        // DeviceId deviceID = DeviceId.deviceId("of:0000000000000001");
+
+        // DriverHandler controllerHandler = driverHandler.createHandler(deviceID);
+        //  // switchHandler = driverService.createHandler(switchId);
+        // OvsdbQueueConfig ovsdbQueueConfig = OvsdbQueueConfig().getOvsdbClient(controllerHandler);
+        //  // ovsdbQueueConfig.setHandler(controllerHandler);
+        //  // ovsdbQueueConfig.setHandler(switchHandler);
+        // DefaultQueueDescription queueDescription =
+        //          (DefaultQueueDescription) DefaultQueueDescription.builder()
+        //                  .queueId(QueueId.queueId("queue" + qid))
+        //                  .type(EnumSet.of(QueueDescription.Type.BURST))
+        //                  .maxRate(Bandwidth.of(1000, DataRateUnit.KBPS))
+        //                  .minRate(Bandwidth.of(10, DataRateUnit.KBPS))
+        //                  .burst(Long.valueOf(1024))
+        //                  .priority(Long.valueOf(32))
+        //                  .build();
+
+        //  qid++;
+        //  ovsdbQueueConfig.addQueue(queueDescription);
+        //  System.out.println("Add a queue to a device successfully!");
+        //  System.out.println("the queue info is:" + queueDescription.toString());
+
+        ObjectNode node = mapper().createObjectNode().put("Response","Queue deleted successfully");
+        return ok(node).build();
 
 }
